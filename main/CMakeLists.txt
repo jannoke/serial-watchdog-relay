@@ -5,6 +5,7 @@ idf_component_register(
         "led_status.c"
         "relay_controller.c"
         "serial_handler.c"
+        "serial_command.c"
         "wifi_ap.c"
         "web_server.c"
         "watchdog_timer.c"

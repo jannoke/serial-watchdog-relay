@@ -10,6 +10,7 @@
 #include "led_status.h"
 #include "relay_controller.h"
 #include "serial_handler.h"
+#include "serial_command.h"
 #include "wifi_ap.h"
 #include "watchdog_timer.h"
 #include "web_server.h"
@@ -32,10 +33,7 @@ static void on_watchdog_trigger(void)
 
 static void on_serial_rx(const uint8_t *data, size_t len)
 {
-    watchdog_communication_received();
-    /* Echo acknowledgement */
-    const uint8_t ack[] = "OK\r\n";
-    serial_send(ack, sizeof(ack) - 1);
+    serial_command_process(data, len);
 }
 
 /* ── Button handling ─────────────────────────────────────────────────────── */
@@ -107,22 +105,25 @@ void app_main(void)
     relay_init(s_config.relay_pin);
     relay_on();
 
-    /* 5. Serial */
+    /* 5. Serial command handler */
+    serial_command_init(&s_config);
+
+    /* 6. Serial */
     serial_handler_init(s_config.serial_mode, on_serial_rx);
 
-    /* 6. WiFi AP */
+    /* 7. WiFi AP */
     wifi_ap_init(s_config.wifi_ssid, s_config.wifi_password,
                  s_config.wifi_hidden, DEFAULT_WIFI_MAX_STA);
 
-    /* 7. Web server */
+    /* 8. Web server */
     web_server_start(&s_config);
 
-    /* 8. Watchdog timer */
+    /* 9. Watchdog timer */
     watchdog_timer_init(s_config.watchdog_timeout_ms,
                         s_config.max_restart_attempts,
                         on_watchdog_trigger);
 
-    /* 9. Physical button */
+    /* 10. Physical button */
     xTaskCreate(button_task, "button", 2048, NULL, 3, NULL);
 
     ESP_LOGI(TAG, "All modules initialized");
