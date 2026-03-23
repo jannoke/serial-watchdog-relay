@@ -1,0 +1,20 @@
+idf_component_register(
+    SRCS 
+        "main.c"
+        "nvs_storage.c"
+        "led_status.c"
+        "relay_controller.c"
+        "serial_handler.c"
+        "wifi_ap.c"
+        "web_server.c"
+        "watchdog_timer.c"
+    INCLUDE_DIRS "."
+    REQUIRES 
+        nvs_flash
+        driver
+        esp_wifi
+        esp_http_server
+        tinyusb
+        json
+        esp_timer
+)
