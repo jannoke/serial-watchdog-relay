@@ -1,0 +1,26 @@
+# watchdog-relay.conf.example
+# Copy to /etc/watchdog-relay.conf and adjust as needed.
+
+[daemon]
+# Serial port connected to the ESP32 watchdog relay
+port = /dev/ttyUSB0
+
+# Baud rate (must match firmware setting, default 115200)
+baud = 115200
+
+# How often to send PING keepalive commands (seconds)
+# Keep well below the watchdog timeout (default 900 s / 15 min)
+interval = 60
+
+# Log file (leave blank to log to stdout/systemd journal)
+log_file = /var/log/watchdog-relay.log
+
+[alerts]
+# Optional scripts executed on communication failures.
+# Leave blank to disable.
+
+# Executed on each individual ping failure (before max_failures is reached)
+warning_script = /usr/local/bin/watchdog-warning.sh
+
+# Executed after max_failures consecutive ping failures
+failure_script = /usr/local/bin/watchdog-failure.sh

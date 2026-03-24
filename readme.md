@@ -5,11 +5,13 @@ ESP32-C6 based watchdog device that monitors serial communication and cycles a r
 ## Features
 
 - **Serial Communication**: Support for both TTL UART and USB CDC modes
+- **Serial Command Protocol**: Full text-based command interface for configuration and control
 - **Watchdog Timer**: Configurable timeout (default 15 minutes)
 - **Relay Control**: Cycles relay to restart monitored device
 - **Restart Attempt Tracking**: Persisted to flash, survives power loss
 - **WiFi Access Point**: Built-in web interface for configuration
 - **LED Status Indicators**: Visual feedback for device state
+- **Server Tools**: Python keepalive daemon and CLI utility
 
 ## Hardware
 
@@ -26,3 +28,199 @@ ESP32-C6 based watchdog device that monitors serial communication and cycles a r
    idf.py set-target esp32c6
    idf.py build
    idf.py flash monitor
+   ```
+
+## Serial Command Protocol
+
+The device exposes a text-based command interface over the serial port (115200 baud, 8N1).
+Commands are terminated with `\n` or `\r\n`; all responses end with `\r\n`.
+Command names are **case-insensitive**.
+
+> **Important:** Only the `PING` and `RESET_TIMER` commands reset the watchdog timer.
+> `STATUS` and `GET` can be used for monitoring without affecting the watchdog countdown.
+
+### Commands
+
+| Command | Description | Resets Watchdog |
+|---|---|---|
+| `PING` | Keepalive — resets watchdog timer | ✅ Yes |
+| `STATUS` | Get device status as JSON | ❌ No |
+| `GET <param>` | Get a specific parameter value | ❌ No |
+| `SET <param> <value>` | Set a parameter value (persists to NVS) | ❌ No |
+| `RESET_TIMER` | Reset watchdog timer explicitly | ✅ Yes |
+| `RESET_ATTEMPTS` | Reset restart attempt counter to zero | ❌ No |
+| `RELAY ON\|OFF\|CYCLE [ms]` | Manual relay control | ❌ No |
+| `REBOOT` | Reboot the device | N/A |
+| `HELP` | Show available commands | ❌ No |
+
+### Response Format
+
+```
+OK                  – command successful
+OK <value>          – command successful with a return value
+ERROR <message>     – command failed
+{ ... }             – JSON object (STATUS response)
+```
+
+### STATUS Response
+
+```json
+{
+  "uptime_ms": 123456,
+  "watchdog_remaining_ms": 890000,
+  "restart_attempts": 0,
+  "max_restart_attempts": 5,
+  "relay_state": true,
+  "timeout_ms": 900000,
+  "off_period_ms": 5000
+}
+```
+
+### GET / SET Parameters
+
+| Parameter | Description | Unit |
+|---|---|---|
+| `timeout` | Watchdog inactivity timeout | seconds |
+| `off_period` | Relay off duration during a cycle | seconds |
+| `max_attempts` | Maximum relay-cycle attempts before halting | count |
+| `relay_pin` | Relay GPIO pin number | — |
+| `led_pin` | LED GPIO pin number | — |
+| `button_pin` | Button GPIO pin number | — |
+| `serial_mode` | Serial mode: 0 = TTL UART, 1 = USB CDC | — |
+| `wifi_ssid` | WiFi AP SSID | — |
+| `wifi_password` | WiFi AP password | — |
+| `wifi_hidden` | Hide WiFi AP: 0 = visible, 1 = hidden | — |
+
+### Quick Terminal Test
+
+```bash
+# Linux – using screen
+screen /dev/ttyUSB0 115200
+
+# Or using minicom
+minicom -D /dev/ttyUSB0 -b 115200
+
+# Type commands, e.g.:
+PING
+STATUS
+GET timeout
+SET timeout 600
+```
+
+---
+
+## Server-Side Tools (`server/`)
+
+Python tools for communicating with the device from a Linux/macOS host.
+
+### Installation
+
+```bash
+cd server
+pip install -r requirements.txt
+```
+
+### watchdog_daemon.py — Keepalive Daemon
+
+Sends periodic `PING` commands to keep the watchdog alive.
+Handles serial port reconnection automatically.
+
+```
+usage: watchdog_daemon.py [-h] [--port PORT] [--baud BAUD]
+                          [--interval INTERVAL] [--log-file FILE]
+                          [-v] [--warning-script SCRIPT]
+                          [--failure-script SCRIPT]
+                          [--max-failures N] [--config FILE]
+
+optional arguments:
+  --port PORT            Serial port device (default: /dev/ttyUSB0)
+  --baud BAUD            Serial baud rate (default: 115200)
+  --interval INTERVAL    PING interval in seconds (default: 60)
+  --log-file FILE        Write log output to FILE
+  -v, --verbose          Enable debug logging
+  --warning-script SCRIPT  Script to run on a PING failure warning
+  --failure-script SCRIPT  Script to run after repeated failures
+  --max-failures N       Consecutive failures before failure script (default: 3)
+  --config FILE          INI config file
+```
+
+#### Examples
+
+```bash
+# Run in foreground
+python3 watchdog_daemon.py --port /dev/ttyUSB0 --interval 60 --verbose
+
+# Use config file
+python3 watchdog_daemon.py --config /etc/watchdog-relay.conf
+```
+
+### watchdog_cli.py — Command Line Interface
+
+Sends individual commands or starts an interactive shell.
+
+```
+usage: watchdog_cli.py [-h] [--port PORT] [--baud BAUD]
+                       [--timeout TIMEOUT] [-i] [command ...]
+
+optional arguments:
+  --port PORT      Serial port device (default: /dev/ttyUSB0)
+  --baud BAUD      Serial baud rate (default: 115200)
+  --timeout SECS   Read timeout in seconds (default: 2)
+  -i, --interactive  Start interactive command shell
+```
+
+#### Examples
+
+```bash
+# Get device status
+python3 watchdog_cli.py --port /dev/ttyUSB0 status
+
+# Set watchdog timeout to 10 minutes
+python3 watchdog_cli.py --port /dev/ttyUSB0 set timeout 600
+
+# Read a parameter
+python3 watchdog_cli.py --port /dev/ttyUSB0 get timeout
+
+# Send keepalive
+python3 watchdog_cli.py --port /dev/ttyUSB0 ping
+
+# Interactive shell (with tab completion)
+python3 watchdog_cli.py --port /dev/ttyUSB0 -i
+```
+
+---
+
+## Systemd Service Setup
+
+Install the keepalive daemon as a systemd service so it starts automatically at boot.
+
+1. **Copy files to the system:**
+   ```bash
+   sudo mkdir -p /opt/watchdog-relay
+   sudo cp server/watchdog_daemon.py /opt/watchdog-relay/
+   sudo pip3 install pyserial
+   ```
+
+2. **Create a config file:**
+   ```bash
+   sudo cp server/watchdog-relay.conf.example /etc/watchdog-relay.conf
+   # Edit /etc/watchdog-relay.conf as needed
+   ```
+
+3. **Install and enable the service:**
+   ```bash
+   sudo cp server/watchdog-relay.service /etc/systemd/system/
+   sudo systemctl daemon-reload
+   sudo systemctl enable watchdog-relay
+   sudo systemctl start watchdog-relay
+   ```
+
+4. **Check status:**
+   ```bash
+   sudo systemctl status watchdog-relay
+   sudo journalctl -u watchdog-relay -f
+   ```
+
+> **Note:** If the serial port is `/dev/ttyACM0` (USB CDC mode) rather than
+> `/dev/ttyUSB0`, update the `ExecStart` line in the service file or the
+> `port` setting in the config file.

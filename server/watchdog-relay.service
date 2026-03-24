@@ -1,0 +1,17 @@
+[Unit]
+Description=Serial Watchdog Relay Keepalive Daemon
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 /opt/watchdog-relay/watchdog_daemon.py \
+    --port /dev/ttyUSB0 \
+    --interval 60 \
+    --log-file /var/log/watchdog-relay.log
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
