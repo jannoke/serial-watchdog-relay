@@ -18,7 +18,7 @@
  *       GPIO15 is a strapping pin – avoid using it as general I/O.
  */
 #define DEFAULT_RELAY_PIN    GPIO_NUM_4   /* D2/A2  */
-#define DEFAULT_LED_PIN      GPIO_NUM_2   /* D0/A0  – external status LED */
+#define DEFAULT_LED_PIN      GPIO_NUM_15   /* D0/A0  – external status LED */
 #define DEFAULT_BUTTON_PIN   GPIO_NUM_9   /* BOOT button (active-low, pull-up) */
 
 /* TTL UART settings – GPIO16/17 match XIAO D6/TX and D7/RX labels */
