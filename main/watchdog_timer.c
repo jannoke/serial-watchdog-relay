@@ -137,3 +137,13 @@ void watchdog_set_max_attempts(uint8_t max_attempts)
 {
     s_max_attempts = max_attempts;
 }
+
+uint32_t watchdog_get_timeout_ms(void)
+{
+    return s_timeout_ms;
+}
+
+uint8_t watchdog_get_max_attempts(void)
+{
+    return s_max_attempts;
+}

@@ -44,6 +44,7 @@ PARAMETERS = [
     "timeout", "off_period", "max_attempts",
     "relay_pin", "led_pin", "button_pin",
     "serial_mode", "wifi_ssid", "wifi_password", "wifi_hidden",
+    "oled_sda_pin", "oled_scl_pin", "oled_i2c_addr", "oled_enabled",
 ]
 
 

@@ -5,6 +5,7 @@
 #include "esp_wifi.h"
 #include "esp_event.h"
 #include "esp_netif.h"
+#include "oled_display.h"
 
 static const char *TAG = "wifi_ap";
 
@@ -18,10 +19,12 @@ static void wifi_event_handler(void *arg, esp_event_base_t event_base,
         wifi_event_ap_staconnected_t *e = (wifi_event_ap_staconnected_t *)event_data;
         ESP_LOGI(TAG, "Station " MACSTR " connected, AID=%d",
                  MAC2STR(e->mac), e->aid);
+        oled_display_set_wifi_connected(true);
     } else if (event_id == WIFI_EVENT_AP_STADISCONNECTED) {
         wifi_event_ap_stadisconnected_t *e = (wifi_event_ap_stadisconnected_t *)event_data;
         ESP_LOGI(TAG, "Station " MACSTR " disconnected, AID=%d",
                  MAC2STR(e->mac), e->aid);
+        oled_display_set_wifi_connected(false);
     }
 }
 

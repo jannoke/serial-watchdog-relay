@@ -14,6 +14,7 @@
 #include "wifi_ap.h"
 #include "watchdog_timer.h"
 #include "web_server.h"
+#include "oled_display.h"
 
 static const char *TAG = "main";
 
@@ -34,6 +35,20 @@ static void on_watchdog_trigger(void)
 static void on_serial_rx(const uint8_t *data, size_t len)
 {
     serial_command_process(data, len);
+}
+
+/* ── OLED display refresh task ───────────────────────────────────────────── */
+
+static void oled_task(void *arg)
+{
+    /* 10 Hz refresh – smooth blinking animations */
+    const TickType_t period = pdMS_TO_TICKS(100);
+    TickType_t last_wake    = xTaskGetTickCount();
+
+    while (1) {
+        oled_display_update();
+        vTaskDelayUntil(&last_wake, period);
+    }
 }
 
 /* ── Button handling ─────────────────────────────────────────────────────── */
@@ -123,7 +138,15 @@ void app_main(void)
                         s_config.max_restart_attempts,
                         on_watchdog_trigger);
 
-    /* 10. Physical button */
+    /* 10. OLED display */
+    if (s_config.oled_enabled) {
+        oled_display_init(s_config.oled_sda_pin,
+                          s_config.oled_scl_pin,
+                          s_config.oled_i2c_addr);
+        xTaskCreate(oled_task, "oled", 4096, NULL, 2, NULL);
+    }
+
+    /* 11. Physical button */
     xTaskCreate(button_task, "button", 2048, NULL, 3, NULL);
 
     ESP_LOGI(TAG, "All modules initialized");

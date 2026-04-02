@@ -9,6 +9,7 @@ idf_component_register(
         "wifi_ap.c"
         "web_server.c"
         "watchdog_timer.c"
+        "oled_display.c"
     INCLUDE_DIRS "."
     REQUIRES 
         nvs_flash
