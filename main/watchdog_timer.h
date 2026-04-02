@@ -70,3 +70,17 @@ void watchdog_set_timeout(uint32_t timeout_ms);
  * @param max_attempts  New maximum.
  */
 void watchdog_set_max_attempts(uint8_t max_attempts);
+
+/**
+ * @brief Get the configured watchdog timeout in milliseconds.
+ *
+ * @return Timeout in milliseconds.
+ */
+uint32_t watchdog_get_timeout_ms(void);
+
+/**
+ * @brief Get the configured maximum restart attempts.
+ *
+ * @return Maximum restart attempts.
+ */
+uint8_t watchdog_get_max_attempts(void);

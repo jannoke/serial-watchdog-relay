@@ -11,13 +11,32 @@ ESP32-C6 based watchdog device that monitors serial communication and cycles a r
 - **Restart Attempt Tracking**: Persisted to flash, survives power loss
 - **WiFi Access Point**: Built-in web interface for configuration
 - **LED Status Indicators**: Visual feedback for device state
+- **OLED Display**: 128×32 I2C SSD1306 display showing watchdog countdown, attempt counter, WiFi status, and heartbeat indicator
 - **Server Tools**: Python keepalive daemon and CLI utility
 
 ## Hardware
 
 - Seeedstudio XIAO ESP32-C6 or similar ESP32-C6 board
 - Relay module
-- Status LED
+- Status LED (external, connected to D0 / GPIO 2)
+- 128×32 SSD1306 OLED module (I2C, connected to D4/SDA and D5/SCL)
+
+## Default Pin Assignments
+
+| Pin Function | Default GPIO | XIAO Label | Config Parameter |
+|---|---|---|---|
+| Relay | GPIO 4 | D2 / A2 | `relay_pin` |
+| Status LED | GPIO 2 | D0 / A0 | `led_pin` |
+| Button | GPIO 9 | BOOT button | `button_pin` |
+| TTL UART TX | GPIO 16 | D6 / TX | *(fixed in firmware)* |
+| TTL UART RX | GPIO 17 | D7 / RX | *(fixed in firmware)* |
+| OLED SDA | GPIO 6 | D4 / SDA | `oled_sda_pin` |
+| OLED SCL | GPIO 7 | D5 / SCL | `oled_scl_pin` |
+
+> **Note:** GPIO 8 on the XIAO ESP32-C6 drives the on-board WS2812 RGB LED and
+> cannot be used as a plain GPIO output. GPIO 15 is a strapping pin — avoid
+> connecting external circuitry to it.  All pin assignments except the fixed
+> UART pins can be changed via `SET <param> <value>` and are persisted to flash.
 
 ## Quick Start
 
@@ -90,6 +109,10 @@ ERROR <message>     – command failed
 | `wifi_ssid` | WiFi AP SSID | — |
 | `wifi_password` | WiFi AP password | — |
 | `wifi_hidden` | Hide WiFi AP: 0 = visible, 1 = hidden | — |
+| `oled_sda_pin` | OLED I2C SDA GPIO pin | — |
+| `oled_scl_pin` | OLED I2C SCL GPIO pin | — |
+| `oled_i2c_addr` | OLED I2C address (hex accepted, e.g. `0x3C`) | — |
+| `oled_enabled` | Enable OLED display: 0 = off, 1 = on | — |
 
 ### Quick Terminal Test
 

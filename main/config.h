@@ -10,15 +10,21 @@
 #define DEFAULT_TURN_OFF_PERIOD_MS    5000               /* 5 seconds  */
 #define DEFAULT_MAX_RESTART_ATTEMPTS  5
 
-/* Hardware defaults */
-#define DEFAULT_RELAY_PIN    GPIO_NUM_4
-#define DEFAULT_LED_PIN      GPIO_NUM_8
-#define DEFAULT_BUTTON_PIN   GPIO_NUM_9
+/* Hardware defaults – Seeed Studio XIAO ESP32-C6 pin assignments
+ *   D0/A0 = GPIO2   D1/A1 = GPIO3   D2/A2 = GPIO4   D3/A3 = GPIO5
+ *   D4/SDA = GPIO6  D5/SCL = GPIO7
+ *   D6/TX  = GPIO16 D7/RX  = GPIO17
+ * NOTE: GPIO8 drives the on-board WS2812 RGB LED (not a regular GPIO LED).
+ *       GPIO15 is a strapping pin – avoid using it as general I/O.
+ */
+#define DEFAULT_RELAY_PIN    GPIO_NUM_4   /* D2/A2  */
+#define DEFAULT_LED_PIN      GPIO_NUM_2   /* D0/A0  – external status LED */
+#define DEFAULT_BUTTON_PIN   GPIO_NUM_9   /* BOOT button (active-low, pull-up) */
 
-/* TTL UART settings */
+/* TTL UART settings – GPIO16/17 match XIAO D6/TX and D7/RX labels */
 #define TTL_UART_PORT        UART_NUM_1
-#define TTL_UART_TX_PIN      GPIO_NUM_16
-#define TTL_UART_RX_PIN      GPIO_NUM_17
+#define TTL_UART_TX_PIN      GPIO_NUM_16   /* D6/TX */
+#define TTL_UART_RX_PIN      GPIO_NUM_17   /* D7/RX */
 #define TTL_UART_BAUD_RATE   115200
 #define TTL_UART_BUF_SIZE    256
 
@@ -27,6 +33,12 @@
 #define DEFAULT_WIFI_PASSWORD  "watchdog123"
 #define DEFAULT_WIFI_HIDDEN    false
 #define DEFAULT_WIFI_MAX_STA   4
+
+/* OLED display defaults – I2C pins match the XIAO D4/D5 SDA/SCL labels */
+#define DEFAULT_OLED_SDA_PIN   GPIO_NUM_6   /* D4/SDA */
+#define DEFAULT_OLED_SCL_PIN   GPIO_NUM_7   /* D5/SCL */
+#define DEFAULT_OLED_I2C_ADDR  0x3C         /* SSD1306 default */
+#define DEFAULT_OLED_ENABLED   true
 
 /* LED blink timing (ms) */
 #define LED_BLINK_STANDBY_MS  1000
@@ -55,6 +67,10 @@ typedef struct {
     char     wifi_ssid[32];
     char     wifi_password[64];
     bool     wifi_hidden;
+    uint8_t  oled_sda_pin;
+    uint8_t  oled_scl_pin;
+    uint8_t  oled_i2c_addr;
+    bool     oled_enabled;
 } device_config_t;
 
 /* Runtime device state */

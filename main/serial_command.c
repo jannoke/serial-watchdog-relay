@@ -14,6 +14,7 @@
 #include "watchdog_timer.h"
 #include "relay_controller.h"
 #include "nvs_storage.h"
+#include "oled_display.h"
 
 #define CMD_BUF_SIZE   256
 #define RESP_BUF_SIZE  512
@@ -55,6 +56,7 @@ static void send_error(const char *msg)
 static void handle_ping(void)
 {
     watchdog_communication_received();
+    oled_display_heartbeat_received();
     send_ok();
 }
 
@@ -112,6 +114,14 @@ static void handle_get(const char *param)
         snprintf(val, sizeof(val), "%s", s_config->wifi_password);
     } else if (strcmp(param, "wifi_hidden") == 0) {
         snprintf(val, sizeof(val), "%d", (int)s_config->wifi_hidden);
+    } else if (strcmp(param, "oled_sda_pin") == 0) {
+        snprintf(val, sizeof(val), "%d", (int)s_config->oled_sda_pin);
+    } else if (strcmp(param, "oled_scl_pin") == 0) {
+        snprintf(val, sizeof(val), "%d", (int)s_config->oled_scl_pin);
+    } else if (strcmp(param, "oled_i2c_addr") == 0) {
+        snprintf(val, sizeof(val), "0x%02X", (unsigned)s_config->oled_i2c_addr);
+    } else if (strcmp(param, "oled_enabled") == 0) {
+        snprintf(val, sizeof(val), "%d", (int)s_config->oled_enabled);
     } else {
         send_error("Unknown parameter");
         return;
@@ -149,6 +159,14 @@ static void handle_set(const char *param, const char *value)
         s_config->wifi_password[sizeof(s_config->wifi_password) - 1] = '\0';
     } else if (strcmp(param, "wifi_hidden") == 0) {
         s_config->wifi_hidden = (strtoul(value, NULL, 10) != 0);
+    } else if (strcmp(param, "oled_sda_pin") == 0) {
+        s_config->oled_sda_pin = (uint8_t)strtoul(value, NULL, 10);
+    } else if (strcmp(param, "oled_scl_pin") == 0) {
+        s_config->oled_scl_pin = (uint8_t)strtoul(value, NULL, 10);
+    } else if (strcmp(param, "oled_i2c_addr") == 0) {
+        s_config->oled_i2c_addr = (uint8_t)strtoul(value, NULL, 0);
+    } else if (strcmp(param, "oled_enabled") == 0) {
+        s_config->oled_enabled = (strtoul(value, NULL, 10) != 0);
     } else {
         send_error("Unknown parameter");
         return;
@@ -165,6 +183,7 @@ static void handle_set(const char *param, const char *value)
 static void handle_reset_timer(void)
 {
     watchdog_communication_received();
+    oled_display_heartbeat_received();
     send_ok();
 }
 
@@ -223,7 +242,8 @@ static void handle_help(void)
         "  REBOOT                  - Reboot the device\r\n"
         "  HELP                    - Show this help\r\n"
         "Parameters: timeout, off_period, max_attempts, relay_pin, led_pin,\r\n"
-        "            button_pin, serial_mode, wifi_ssid, wifi_password, wifi_hidden\r\n"
+        "            button_pin, serial_mode, wifi_ssid, wifi_password, wifi_hidden,\r\n"
+        "            oled_sda_pin, oled_scl_pin, oled_i2c_addr, oled_enabled\r\n"
         "OK\r\n"
     );
 }

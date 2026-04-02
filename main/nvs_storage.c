@@ -36,7 +36,11 @@ static void fill_defaults(device_config_t *config)
     config->serial_mode          = SERIAL_MODE_CDC;
     strlcpy(config->wifi_ssid,     DEFAULT_WIFI_SSID,     sizeof(config->wifi_ssid));
     strlcpy(config->wifi_password, DEFAULT_WIFI_PASSWORD, sizeof(config->wifi_password));
-    config->wifi_hidden = DEFAULT_WIFI_HIDDEN;
+    config->wifi_hidden   = DEFAULT_WIFI_HIDDEN;
+    config->oled_sda_pin  = DEFAULT_OLED_SDA_PIN;
+    config->oled_scl_pin  = DEFAULT_OLED_SCL_PIN;
+    config->oled_i2c_addr = DEFAULT_OLED_I2C_ADDR;
+    config->oled_enabled  = DEFAULT_OLED_ENABLED;
 }
 
 esp_err_t nvs_storage_load_config(device_config_t *config)
